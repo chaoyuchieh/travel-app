@@ -22,8 +22,12 @@ export default function ShoppingPanel({ tripId }: { tripId: string }) {
 
   useEffect(() => {
     supabase.from('shopping_items').select('*').eq('trip_id', tripId).order('created_at')
-      .then(({ data }) => setItems(data || []))
-      .finally(() => setLoading(false))
+  .then(({ data }) => {
+    setItems(data || [])
+    setLoading(false)
+  })
+  .catch(() => setLoading(false))
+  
   }, [tripId])
 
   async function addItem() {
