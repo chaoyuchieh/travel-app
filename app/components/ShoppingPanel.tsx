@@ -21,13 +21,12 @@ export default function ShoppingPanel({ tripId }: { tripId: string }) {
   const inp: React.CSSProperties = { width: "100%", padding: "8px 10px", fontSize: 13, border: "1px solid #ddd", borderRadius: 8, boxSizing: "border-box" }
 
   useEffect(() => {
-    supabase.from('shopping_items').select('*').eq('trip_id', tripId).order('created_at')
+   supabase.from('shopping_items').select('*').eq('trip_id', tripId).order('created_at')
   .then(({ data }) => {
     setItems(data || [])
     setLoading(false)
   })
-  .catch(() => setLoading(false))
-  
+
   }, [tripId])
 
   async function addItem() {
