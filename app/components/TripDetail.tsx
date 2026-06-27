@@ -395,7 +395,7 @@ export default function TripDetail({ trip, onBack }: { trip: Trip; onBack: () =>
                   <input style={inp} placeholder="備註（選填）" value={newItem.note} onChange={e => setNewItem(p => ({ ...p, note: e.target.value }))} />
                   <div style={{ display: "flex", gap: 8 }}>
                     <button onClick={() => setShowAddItem(false)} style={{ flex: 1, padding: 8, fontSize: 13, cursor: "pointer", background: "white", border: "1px solid #ddd", borderRadius: 8 }}>取消</button>
-                    <button onClick={addItem} disabled={!newItem.title.trim()} style={{ flex: 2, padding: 8, fontSize: 13, fontWeight: 500, cursor: "pointer", background: newItem.title.trim() ? "#185FA5" : "#ddd", border: "none", borderRadius: 8, color: newItem.title.trim() ? "white" : "#999" }}>加入行程</button>
+                    <button onClick={addItem} disabled={!newItem.title.trim()} style={{ flex: 2, padding: 8, fontSize: 13, fontWeight: 500, cursor: "pointer", background: newItem.title.trim() ? "#185FA5" : "#ddd", border: "none", borderRadius: 8, color: newItem.title.trim() ? "white" : "#999" }}>新增</button>
                   </div>
                 </div>
               </div>
