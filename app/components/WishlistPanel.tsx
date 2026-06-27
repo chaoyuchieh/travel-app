@@ -27,10 +27,15 @@ function EditPlaceModal({ place, onClose, onUpdated }: { place: WishlistPlace; o
 
   async function handleSave() {
     setLoading(true)
-    const { data, error } = await supabase.from('wishlist_places').update(form).eq('id', place.id).select().single()
-    if (error) { alert('更新失敗'); setLoading(false); return }
-    onUpdated(data)
-    setLoading(false)
+    try {
+      const { data, error } = await supabase.from('wishlist_places').update(form).eq('id', place.id).select().single()
+      if (error) throw error
+      onUpdated(data)
+    } catch (e) {
+      alert('更新失敗')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -48,7 +53,7 @@ function EditPlaceModal({ place, onClose, onUpdated }: { place: WishlistPlace; o
         </div>
         <div style={{ display: "flex", gap: 10, marginTop: "1.5rem" }}>
           <button onClick={onClose} style={{ flex: 1, padding: "10px", fontSize: 14, cursor: "pointer", background: "#f5f5f5", border: "1px solid #ddd", borderRadius: 10 }}>取消</button>
-          <button onClick={handleSave} disabled={!form.name.trim() || loading} style={{ flex: 2, padding: "10px", fontSize: 14, fontWeight: 500, cursor: "pointer", background: form.name.trim() && !loading ? "#185FA5" : "#ddd", color: form.name.trim() && !loading ? "white" : "#999", border: "none", borderRadius: 10 }}>
+          <button onClick={handleSave} disabled={!form.name.trim() || loading} style={{ flex: 2, padding: "10px", fontSize: 14, fontWeight: 500, cursor: "pointer", background: form.name.trim() && !loading ? "#185FA5" : "#ddd", color: "white", border: "none", borderRadius: 10 }}>
             {loading ? "儲存中…" : "儲存變更"}
           </button>
         </div>
@@ -96,24 +101,40 @@ export default function WishlistPanel({ tripId, trip }: { tripId: string; trip: 
   const inp: React.CSSProperties = { width: "100%", padding: "8px 10px", fontSize: 14, border: "1px solid #ddd", borderRadius: 8, boxSizing: "border-box" }
 
   useEffect(() => {
-    supabase.from('wishlist_places').select('*').eq('trip_id', tripId).order('created_at')
-      .then(({ data }) => setPlaces(data || []))
-      .finally(() => setLoading(false))
+    const fetchPlaces = async () => {
+      try {
+        const { data } = await supabase.from('wishlist_places').select('*').eq('trip_id', tripId).order('created_at')
+        setPlaces(data || [])
+      } catch (error) {
+        console.error('Failed to fetch places:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchPlaces()
   }, [tripId])
 
   async function addPlace() {
     if (!form.name.trim()) return
-    const { data, error } = await supabase.from('wishlist_places').insert({ trip_id: tripId, ...form }).select().single()
-    if (error) { alert('新增失敗'); return }
-    setPlaces(prev => [...prev, data])
-    setForm({ name: "", address: "", url: "", note: "" })
-    setShowAdd(false)
+    try {
+      const { data, error } = await supabase.from('wishlist_places').insert({ trip_id: tripId, ...form }).select().single()
+      if (error) throw error
+      setPlaces(prev => [...prev, data])
+      setForm({ name: "", address: "", url: "", note: "" })
+      setShowAdd(false)
+    } catch (e) {
+      alert('新增失敗')
+    }
   }
 
   async function deletePlace(id: string) {
     if (!confirm('確定刪除？')) return
-    await supabase.from('wishlist_places').delete().eq('id', id)
-    setPlaces(prev => prev.filter(p => p.id !== id))
+    try {
+      await supabase.from('wishlist_places').delete().eq('id', id)
+      setPlaces(prev => prev.filter(p => p.id !== id))
+    } catch (e) {
+      alert('刪除失敗')
+    }
   }
 
   const pendingPlaces = places.filter(p => !p.added)
@@ -146,7 +167,7 @@ export default function WishlistPanel({ tripId, trip }: { tripId: string; trip: 
             <input style={inp} placeholder="備註（選填）" value={form.note} onChange={e => setForm(p => ({ ...p, note: e.target.value }))} />
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={() => setShowAdd(false)} style={{ flex: 1, padding: 8, fontSize: 14, cursor: "pointer", background: "white", border: "1px solid #ddd", borderRadius: 8 }}>取消</button>
-              <button onClick={addPlace} disabled={!form.name.trim()} style={{ flex: 2, padding: 8, fontSize: 14, fontWeight: 500, cursor: "pointer", background: form.name.trim() ? "#185FA5" : "#ddd", border: "none", borderRadius: 8, color: form.name.trim() ? "white" : "#999" }}>加入清單</button>
+              <button onClick={addPlace} disabled={!form.name.trim()} style={{ flex: 2, padding: 8, fontSize: 14, fontWeight: 500, cursor: "pointer", background: form.name.trim() ? "#185FA5" : "#ddd", color: "white", border: "none", borderRadius: 8 }}>新增</button>
             </div>
           </div>
         </div>
