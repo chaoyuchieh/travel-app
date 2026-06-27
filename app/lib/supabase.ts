@@ -50,6 +50,7 @@ export async function createItem(item: {
   start_time?: string
   note?: string
   category?: string
+  sort_order?: number
 }) {
   const { data, error } = await supabase
     .from('itinerary_items')
