@@ -21,13 +21,17 @@ export default function ShoppingPanel({ tripId }: { tripId: string }) {
   const inp: React.CSSProperties = { width: "100%", padding: "8px 10px", fontSize: 13, border: "1px solid #ddd", borderRadius: 8, boxSizing: "border-box" }
 
   useEffect(() => {
-    supabase.from('shopping_items').select('*').eq('trip_id', tripId).order('created_at')
-  .then(({ data }) => {
-    setItems(data || [])
-    setLoading(false)
-  })
-  .catch(() => setLoading(false))
-  
+    const fetchItems = async () => {
+      try {
+        const { data } = await supabase.from('shopping_items').select('*').eq('trip_id', tripId).order('created_at')
+        setItems(data || [])
+      } catch (error) {
+        console.error('Failed to fetch items:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchItems()
   }, [tripId])
 
   async function addItem() {
@@ -84,7 +88,7 @@ export default function ShoppingPanel({ tripId }: { tripId: string }) {
             <input style={inp} placeholder="備註（選填）" value={form.note} onChange={e => setForm(p => ({ ...p, note: e.target.value }))} />
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={() => setShowAdd(false)} style={{ flex: 1, padding: 8, fontSize: 13, cursor: "pointer", background: "white", border: "1px solid #ddd", borderRadius: 8 }}>取消</button>
-              <button onClick={addItem} disabled={!form.name.trim()} style={{ flex: 2, padding: 8, fontSize: 13, fontWeight: 500, cursor: "pointer", background: form.name.trim() ? "#185FA5" : "#ddd", border: "none", borderRadius: 8, color: form.name.trim() ? "white" : "#999" }}>加入清單</button>
+              <button onClick={addItem} disabled={!form.name.trim()} style={{ flex: 2, padding: 8, fontSize: 13, fontWeight: 500, cursor: "pointer", background: form.name.trim() ? "#185FA5" : "#ddd", color: "white", border: "none", borderRadius: 8 }}>新增</button>
             </div>
           </div>
         </div>
@@ -120,7 +124,7 @@ export default function ShoppingPanel({ tripId }: { tripId: string }) {
               {bought.map(item => (
                 <div key={item.id} style={{ background: "#f9f9f9", border: "1px solid #eee", borderRadius: 12, padding: "12px 14px", opacity: 0.6 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <button onClick={() => togglePurchased(item)} style={{ width: 22, height: 22, borderRadius: 50, border: "none", background: "#1D9E75", cursor: "pointer", flexShrink: 0, fontSize: 12, color: "white" }}>✓</button>
+                    <button onClick={() => togglePurchased(item)} style={{ width: 22, height: 22, borderRadius: 50, border: "none", background: "#1D9E75", cursor: "pointer", flexShrink: 0, fontSize: 14 }}>✓</button>
                     <div style={{ flex: 1 }}>
                       <p style={{ margin: 0, fontSize: 14, textDecoration: "line-through", color: "#888" }}>{item.name}</p>
                       {item.store && <p style={{ margin: "2px 0 0", fontSize: 12, color: "#bbb" }}>🏪 {item.store}</p>}
