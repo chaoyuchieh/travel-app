@@ -27,10 +27,15 @@ function EditPlaceModal({ place, onClose, onUpdated }: { place: WishlistPlace; o
 
   async function handleSave() {
     setLoading(true)
-    const { data, error } = await supabase.from('wishlist_places').update(form).eq('id', place.id).select().single()
-    if (error) { alert('更新失敗'); setLoading(false); return }
-    onUpdated(data)
-    setLoading(false)
+    try {
+      const { data, error } = await supabase.from('wishlist_places').update(form).eq('id', place.id).select().single()
+      if (error) throw error
+      onUpdated(data)
+    } catch (e) {
+      alert('更新失敗')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -96,24 +101,40 @@ export default function WishlistPanel({ tripId, trip }: { tripId: string; trip: 
   const inp: React.CSSProperties = { width: "100%", padding: "8px 10px", fontSize: 14, border: "1px solid #ddd", borderRadius: 8, boxSizing: "border-box" }
 
   useEffect(() => {
-    supabase.from('wishlist_places').select('*').eq('trip_id', tripId).order('created_at')
-      .then(({ data }) => setPlaces(data || []))
-      .finally(() => setLoading(false))
+    const fetchPlaces = async () => {
+      try {
+        const { data } = await supabase.from('wishlist_places').select('*').eq('trip_id', tripId).order('created_at')
+        setPlaces(data || [])
+      } catch (error) {
+        console.error('Failed to fetch places:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchPlaces()
   }, [tripId])
 
   async function addPlace() {
     if (!form.name.trim()) return
-    const { data, error } = await supabase.from('wishlist_places').insert({ trip_id: tripId, ...form }).select().single()
-    if (error) { alert('新增失敗'); return }
-    setPlaces(prev => [...prev, data])
-    setForm({ name: "", address: "", url: "", note: "" })
-    setShowAdd(false)
+    try {
+      const { data, error } = await supabase.from('wishlist_places').insert({ trip_id: tripId, ...form }).select().single()
+      if (error) throw error
+      setPlaces(prev => [...prev, data])
+      setForm({ name: "", address: "", url: "", note: "" })
+      setShowAdd(false)
+    } catch (e) {
+      alert('新增失敗')
+    }
   }
 
   async function deletePlace(id: string) {
     if (!confirm('確定刪除？')) return
-    await supabase.from('wishlist_places').delete().eq('id', id)
-    setPlaces(prev => prev.filter(p => p.id !== id))
+    try {
+      await supabase.from('wishlist_places').delete().eq('id', id)
+      setPlaces(prev => prev.filter(p => p.id !== id))
+    } catch (e) {
+      alert('刪除失敗')
+    }
   }
 
   const pendingPlaces = places.filter(p => !p.added)

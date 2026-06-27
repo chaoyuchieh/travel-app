@@ -231,7 +231,7 @@ function CreateTripModal({ onClose, onCreated }: { onClose: () => void; onCreate
           </div>
         )}
         <div style={{ display: "flex", gap: 10, marginTop: "1.5rem" }}>
-          {step === 2 && <button onClick={() => setStep(1)} style={{ flex: 1, padding: "10px", fontSize: 14, cursor: "pointer", background: "#f5f5f5", border: "1px solid #ddd", borderRadius: 10 }}>上一步</button>}
+          {step === 2 && <button onClick={() => setStep(1)} style={{ flex: 1, padding: "10px", fontSize: 14, cursor: "pointer", background: "#f5f5f5", border: "1px solid #ddd", borderRadius: 10 }}>← 上一步</button>}
           <button onClick={() => step === 1 ? (valid1 && setStep(2)) : handleSubmit()} disabled={step === 1 ? !valid1 : !valid2 || loading}
             style={{ flex: 2, padding: "10px", fontSize: 14, fontWeight: 500, cursor: "pointer", background: (step === 1 ? valid1 : valid2) && !loading ? "#185FA5" : "#ddd", color: (step === 1 ? valid1 : valid2) && !loading ? "white" : "#999", border: "none", borderRadius: 10 }}>
             {loading ? "建立中…" : step === 1 ? "下一步 →" : "建立旅行 ✓"}
@@ -270,6 +270,10 @@ export default function TravelApp() {
   async function shareTrip(id: string) {
     try {
       const { data } = await supabase.from('trips').select('share_token').eq('id', id).single()
+      if (!data || !data.share_token) {
+        alert('無法取得分享連結')
+        return
+      }
       const url = `${window.location.origin}/trip/${data.share_token}`
       navigator.clipboard.writeText(url)
       alert('分享連結已複製！\n\n' + url)
