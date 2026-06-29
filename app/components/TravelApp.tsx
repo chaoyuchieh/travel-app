@@ -270,6 +270,7 @@ export default function TravelApp() {
   async function shareTrip(id: string) {
     try {
       const { data } = await supabase.from('trips').select('share_token').eq('id', id).single()
+      if (!data) { alert('找不到分享連結'); return }
       const url = `${window.location.origin}/trip/${data.share_token}`
       navigator.clipboard.writeText(url)
       alert('分享連結已複製！\n\n' + url)
