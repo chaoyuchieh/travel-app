@@ -111,7 +111,7 @@ function EditTripModal({ trip, onClose, onUpdated }: { trip: Trip; onClose: () =
             <label style={{ fontSize: 13, color: "#888", display: "block", marginBottom: 6 }}>目的地</label>
             <input style={inp} value={form.destination} onChange={e => update("destination", e.target.value)} />
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div>
               <label style={{ fontSize: 13, color: "#888", display: "block", marginBottom: 6 }}>出發日期</label>
               <input type="date" style={inp} value={form.start_date} onChange={e => update("start_date", e.target.value)} />
@@ -125,8 +125,8 @@ function EditTripModal({ trip, onClose, onUpdated }: { trip: Trip; onClose: () =
             <label style={{ fontSize: 13, color: "#888", display: "block", marginBottom: 8 }}>封面圖示</label>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {EMOJIS.map(e => (
-                <button key={e} onClick={() => update("cover_emoji", e)} style={{ width: 40, height: 40, fontSize: 20, border: "none", borderRadius: 10, cursor: "pointer", background: form.cover_emoji === e ? "#E6F1FB" : "#f5f5f5", outline: form.cover_emoji === e ? "2px solid #378ADD" : "none" }}>{e}</button>
-              ))}
+<button key={e} onClick={() => update("cover_emoji", e)} style={{ width: 40, height: 40, fontSize: 20, border: "none", borderRadius: 10, cursor: "pointer", background: form.cover_emoji === e ? "#E6F1FB" : "#f5f5f5", outline: form.cover_emoji === e ? "2px solid #378ADD" : "none", fontFamily: "Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif" }}>{e}</button>
+))}
             </div>
           </div>
           <div>
@@ -203,7 +203,7 @@ function CreateTripModal({ onClose, onCreated }: { onClose: () => void; onCreate
         )}
         {step === 2 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={{ display: "flex", flexDirection: "row", gap: 12 }}>
               <div>
                 <label style={{ fontSize: 13, color: "#888", display: "block", marginBottom: 6 }}>出發日期</label>
                 <input type="date" style={inp} value={form.start_date} onChange={e => update("start_date", e.target.value)} />
@@ -231,7 +231,7 @@ function CreateTripModal({ onClose, onCreated }: { onClose: () => void; onCreate
           </div>
         )}
         <div style={{ display: "flex", gap: 10, marginTop: "1.5rem" }}>
-          {step === 2 && <button onClick={() => setStep(1)} style={{ flex: 1, padding: "10px", fontSize: 14, cursor: "pointer", background: "#f5f5f5", border: "1px solid #ddd", borderRadius: 10 }}>← 上一步</button>}
+          {step === 2 && <button onClick={() => setStep(1)} style={{ flex: 1, padding: "10px", fontSize: 14, cursor: "pointer", background: "#f5f5f5", border: "1px solid #ddd", borderRadius: 10 }}>上一步</button>}
           <button onClick={() => step === 1 ? (valid1 && setStep(2)) : handleSubmit()} disabled={step === 1 ? !valid1 : !valid2 || loading}
             style={{ flex: 2, padding: "10px", fontSize: 14, fontWeight: 500, cursor: "pointer", background: (step === 1 ? valid1 : valid2) && !loading ? "#185FA5" : "#ddd", color: (step === 1 ? valid1 : valid2) && !loading ? "white" : "#999", border: "none", borderRadius: 10 }}>
             {loading ? "建立中…" : step === 1 ? "下一步 →" : "建立旅行 ✓"}
@@ -270,10 +270,6 @@ export default function TravelApp() {
   async function shareTrip(id: string) {
     try {
       const { data } = await supabase.from('trips').select('share_token').eq('id', id).single()
-      if (!data || !data.share_token) {
-        alert('無法取得分享連結')
-        return
-      }
       const url = `${window.location.origin}/trip/${data.share_token}`
       navigator.clipboard.writeText(url)
       alert('分享連結已複製！\n\n' + url)
