@@ -53,4 +53,12 @@ body {
   padding: 1.5rem 1rem;
   min-height: 100vh;
   width: 100%;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+input, textarea, button {
+  -webkit-user-select: text;
+  user-select: text;
 }
