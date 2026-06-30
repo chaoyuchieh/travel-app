@@ -73,14 +73,14 @@ const CAT_META: Record<string, { icon: string; color: string; label: string }> =
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"]
 
-function DroppableDate({ date, index, isActive, isOver, itemCount, tab }: {
-  date: string; index: number; isActive: boolean; isOver: boolean; itemCount: number; tab: string
+function DroppableDate({ date, index, isActive, isOver }: {
+  date: string; index: number; isActive: boolean; isOver: boolean
 }) {
   const { setNodeRef } = useDroppable({ id: `date-${date}`, data: { date } })
   const d = new Date(date)
 
   return (
-    <div ref={setNodeRef} onClick={() => {}} style={{
+    <div ref={setNodeRef} style={{
       flexShrink: 0, minWidth: 52, padding: "7px 10px", borderRadius: 10,
       textAlign: "center", cursor: "pointer", transition: "all 0.15s",
       border: isOver ? "2px solid #185FA5" : isActive ? "none" : "1px solid #ddd",
@@ -122,7 +122,7 @@ function SwipeableItem({ item, onEdit, onDelete }: {
       >
         <div {...attributes} {...listeners} style={{ color: "#ccc", fontSize: 18, cursor: "grab", paddingTop: 2, flexShrink: 0, touchAction: "none" }}>⠿</div>
         <div style={{ width: 44, flexShrink: 0, textAlign: "center" }}>
-          {item.start_time ? <p style={{ margin: 0, fontSize: 11, fontWeight: 500, color: "#888" }}>{item.start_time.slice(0, 5)}</p>: <p style={{ margin: 0, fontSize: 18 }}>{cat.icon}</p>}
+          {item.start_time ? <p style={{ margin: 0, fontSize: 11, fontWeight: 500, color: "#888" }}>{item.start_time.slice(0, 5)}</p> : <p style={{ margin: 0, fontSize: 18 }}>{cat.icon}</p>}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
@@ -201,6 +201,8 @@ export default function TripDetail({ trip, onBack }: { trip: Trip; onBack: () =>
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [overDateId, setOverDateId] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState("")
+  const [routeMode, setRouteMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const dates = getDatesInRange(trip.start_date, trip.end_date)
 
   const sensors = useSensors(
@@ -223,7 +225,6 @@ export default function TripDetail({ trip, onBack }: { trip: Trip; onBack: () =>
 
     const overDate = (over.data.current as any)?.date
 
-    // 拖曳到日期格（從想去清單）
     if (overDate && tab === 'wishlist') {
       const { error } = await supabase.from('itinerary_items').insert({
         trip_id: trip.id,
@@ -243,7 +244,6 @@ export default function TripDetail({ trip, onBack }: { trip: Trip; onBack: () =>
       return
     }
 
-    // 行程內排序
     if (!overDate && active.id !== over.id) {
       const oldIndex = dayItems.findIndex(i => i.id === active.id)
       const newIndex = dayItems.findIndex(i => i.id === over.id)
@@ -273,6 +273,18 @@ export default function TripDetail({ trip, onBack }: { trip: Trip; onBack: () =>
     } catch (e) { alert('刪除失敗') }
   }
 
+  function openRoute() {
+    const ordered = selectedIds
+      .map(id => dayItems.find(i => i.id === id))
+      .filter((i): i is ItineraryItem => !!i && !!i.location)
+    if (ordered.length < 2) return
+    const origin = encodeURIComponent(ordered[0].location)
+    const destination = encodeURIComponent(ordered[ordered.length - 1].location)
+    const waypoints = ordered.slice(1, -1).map(i => encodeURIComponent(i.location)).join('|')
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypoints ? `&waypoints=${waypoints}` : ''}`
+    window.open(url, '_blank')
+  }
+
   const inp: React.CSSProperties = { width: "100%", padding: "8px 10px", fontSize: 13, border: "1px solid #ddd", borderRadius: 8, boxSizing: "border-box" }
   const TABS = [
     { key: 'itinerary', label: '📅 行程' },
@@ -297,7 +309,6 @@ export default function TripDetail({ trip, onBack }: { trip: Trip; onBack: () =>
         </div>
       </div>
 
-      {/* 分頁切換 */}
       <div style={{ display: "flex", gap: 6, marginBottom: "1rem", background: "#f0f0f0", borderRadius: 12, padding: 4 }}>
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key as any)} style={{
@@ -318,48 +329,57 @@ export default function TripDetail({ trip, onBack }: { trip: Trip; onBack: () =>
         onDragEnd={handleDragEnd}
         onDragCancel={() => { setDraggingId(null); setOverDateId(null) }}
       >
-        {/* 共用日期列 */}
         <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, marginBottom: "1rem", scrollbarWidth: "none" }}>
           {dates.map((d, i) => (
             <div key={d} onClick={() => setActiveDate(d)}>
-  <DroppableDate
-    date={d}
-    index={i}
-    isActive={d === activeDate}
-    isOver={overDateId === `date-${d}`}
-    itemCount={items.filter(x => x.date === d).length}
-    tab={tab}
-  />
-</div>
+              <DroppableDate
+                date={d}
+                index={i}
+                isActive={d === activeDate}
+                isOver={overDateId === `date-${d}`}
+              />
+            </div>
           ))}
         </div>
 
-        {/* 拖曳提示（只在想去分頁顯示） */}
         {tab === 'wishlist' && (
           <p style={{ fontSize: 12, color: draggingId ? "#185FA5" : "#aaa", textAlign: "center", margin: "0 0 12px", transition: "color 0.2s" }}>
             {draggingId ? "放到上方日期格加入行程 ⬆" : "⬆ 拖曳地點到上方日期加入行程"}
           </p>
         )}
 
-        {/* 成功提示 */}
         {successMsg && (
           <div style={{ background: "#E1F5EE", borderRadius: 10, padding: "10px 14px", marginBottom: 12, fontSize: 13, color: "#085041", textAlign: "center" }}>
             {successMsg}
           </div>
         )}
 
-        {/* 想去清單 */}
         {tab === 'wishlist' && <WishlistPanel tripId={trip.id} trip={trip} />}
 
-        {/* 購物清單 */}
         {tab === 'shopping' && <ShoppingPanel tripId={trip.id} />}
 
-        {/* 行程 */}
         {tab === 'itinerary' && (
           <div style={{ background: "white", border: "1px solid #eee", borderRadius: 16, overflow: "hidden" }}>
             <div style={{ padding: "14px 16px", borderBottom: "1px solid #eee", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <p style={{ margin: 0, fontSize: 14, fontWeight: 500 }}>{activeDate ? formatDate(activeDate) : ""} 行程</p>
-              <button onClick={() => setShowAddItem(true)} style={{ background: "#185FA5", color: "white", border: "none", borderRadius: 8, padding: "6px 12px", fontSize: 13, cursor: "pointer" }}>+ 新增</button>
+              <div style={{ display: "flex", gap: 6 }}>
+                {routeMode ? (
+                  <>
+                    <button onClick={() => {
+                      const withLoc = dayItems.filter(i => i.location)
+                      setSelectedIds(withLoc.length === selectedIds.length ? [] : withLoc.map(i => i.id))
+                    }} style={{ background: "#f0f0f0", border: "none", borderRadius: 8, padding: "6px 10px", fontSize: 12, cursor: "pointer" }}>
+                      {selectedIds.length > 0 ? "取消全選" : "全選"}
+                    </button>
+                    <button onClick={() => { setRouteMode(false); setSelectedIds([]) }} style={{ background: "#f0f0f0", border: "none", borderRadius: 8, padding: "6px 10px", fontSize: 12, cursor: "pointer" }}>完成</button>
+                  </>
+                ) : (
+                  <>
+                    <button onClick={() => setRouteMode(true)} style={{ background: "#E1F5EE", color: "#085041", border: "none", borderRadius: 8, padding: "6px 10px", fontSize: 12, cursor: "pointer" }}>勾選排路線</button>
+                    <button onClick={() => setShowAddItem(true)} style={{ background: "#185FA5", color: "white", border: "none", borderRadius: 8, padding: "6px 12px", fontSize: 13, cursor: "pointer" }}>+ 新增</button>
+                  </>
+                )}
+              </div>
             </div>
 
             {loadingItems ? (
@@ -369,6 +389,47 @@ export default function TripDetail({ trip, onBack }: { trip: Trip; onBack: () =>
                 <p style={{ fontSize: 28, margin: "0 0 8px" }}>📅</p>
                 <p style={{ margin: 0, fontSize: 14 }}>這天還沒有行程</p>
                 <p style={{ margin: "4px 0 0", fontSize: 12 }}>點「+ 新增」或從「想去」拖曳加入</p>
+              </div>
+            ) : routeMode ? (
+              <div>
+                {dayItems.map((item, idx) => {
+                  const isSelected = selectedIds.includes(item.id)
+                  const order = selectedIds.indexOf(item.id) + 1
+                  return (
+                    <div key={item.id}
+                      onClick={() => {
+                        if (!item.location) return
+                        setSelectedIds(prev => isSelected ? prev.filter(id => id !== item.id) : [...prev, item.id])
+                      }}
+                      style={{
+                        padding: "14px 16px",
+                        borderBottom: idx < dayItems.length - 1 ? "1px solid #eee" : "none",
+                        display: "flex", gap: 12, alignItems: "center",
+                        background: isSelected ? "#F5FAFE" : "white",
+                        cursor: item.location ? "pointer" : "default",
+                        opacity: item.location ? 1 : 0.5
+                      }}>
+                      <div style={{
+                        width: 20, height: 20, borderRadius: 6, flexShrink: 0,
+                        border: isSelected ? "none" : "2px solid #ddd",
+                        background: isSelected ? "#185FA5" : "white",
+                        color: "white", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center"
+                      }}>{isSelected ? "✓" : ""}</div>
+                      <div style={{ width: 40, flexShrink: 0, fontSize: 11, color: "#888" }}>{item.start_time?.slice(0,5)}</div>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ margin: 0, fontSize: 14, fontWeight: 500 }}>{item.title}</p>
+                        {item.location ? (
+                          <p style={{ margin: "2px 0 0", fontSize: 12, color: "#888" }}>📍 {item.location}</p>
+                        ) : (
+                          <p style={{ margin: "2px 0 0", fontSize: 11, color: "#bbb" }}>沒有地點，無法加入路線</p>
+                        )}
+                      </div>
+                      {isSelected && (
+                        <div style={{ width: 20, height: 20, borderRadius: 99, background: "#185FA5", color: "white", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{order}</div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             ) : (
               <SortableContext items={dayItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
@@ -403,7 +464,7 @@ export default function TripDetail({ trip, onBack }: { trip: Trip; onBack: () =>
           </div>
         )}
 
-        {tab === 'itinerary' && <p style={{ fontSize: 11, color: "#bbb", textAlign: "center", marginTop: 12 }}>⠿ 長按拖曳排序　← 左滑顯示編輯刪除</p>}
+        {tab === 'itinerary' && !routeMode && <p style={{ fontSize: 11, color: "#bbb", textAlign: "center", marginTop: 12 }}>⠿ 長按拖曳排序　← 左滑顯示編輯刪除</p>}
 
         <DragOverlay>
           {draggingId && tab === 'wishlist' && (
@@ -413,6 +474,18 @@ export default function TripDetail({ trip, onBack }: { trip: Trip; onBack: () =>
           )}
         </DragOverlay>
       </DndContext>
+
+      {routeMode && selectedIds.length >= 2 && (
+        <div style={{
+          position: "fixed", bottom: 16, left: 16, right: 16, maxWidth: 480, margin: "0 auto",
+          background: "#185FA5", borderRadius: 14, padding: "12px 16px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.2)", zIndex: 50
+        }}>
+          <p style={{ margin: 0, fontSize: 13, color: "white", fontWeight: 500 }}>已選 {selectedIds.length} 個地點</p>
+          <button onClick={openRoute} style={{ background: "white", color: "#185FA5", border: "none", borderRadius: 10, padding: "8px 16px", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>🗺️ 規劃路線</button>
+        </div>
+      )}
     </div>
   )
 }
