@@ -255,9 +255,16 @@ export default function TripDetail({ trip, onBack }: { trip: Trip; onBack: () =>
   }
 
   async function addItem() {
-    if (!newItem.title.trim()) return
-    try {
-      const data = await createItem({ trip_id: trip.id, date: activeDate, sort_order: dayItems.length, ...newItem })
+  if (!newItem.title.trim()) return
+  try {
+    const payload = {
+      trip_id: trip.id,
+      date: activeDate,
+      sort_order: dayItems.length,
+      ...newItem,
+      start_time: newItem.start_time || null,
+    }
+    const data = await createItem(payload as any)
       setItems(prev => [...prev, data])
       setNewItem({ title: "", location: "", start_time: "", category: "attraction", note: "" })
       setShowAddItem(false)
