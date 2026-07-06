@@ -123,8 +123,10 @@ export default function WishlistPanel({ tripId, trip }: { tripId: string; trip: 
 
   useEffect(() => {
     supabase.from('wishlist_places').select('*').eq('trip_id', tripId).order('created_at')
-      .then(({ data }) => setPlaces(data || []))
-      .finally(() => setLoading(false))
+  .then(({ data }) => {
+    setPlaces(data || [])
+    setLoading(false)
+  })
   }, [tripId])
 
   async function addPlace() {
