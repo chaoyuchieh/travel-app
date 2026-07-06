@@ -226,12 +226,13 @@ export default function TripDetail({ trip, onBack }: { trip: Trip; onBack: () =>
     const overDate = (over.data.current as any)?.date
 
     if (overDate && tab === 'wishlist') {
+      const place = (active.data.current as any)?.place
       const { error } = await supabase.from('itinerary_items').insert({
         trip_id: trip.id,
         date: overDate,
-        title: (active.data.current as any)?.place?.name || "",
-        location: (active.data.current as any)?.place?.address || "",
-        category: 'attraction',
+        title: place?.name || "",
+        location: place?.address || "",
+        category: place?.category || 'attraction',
         sort_order: items.filter(i => i.date === overDate).length,
       })
       if (error) { alert('新增失敗'); return }

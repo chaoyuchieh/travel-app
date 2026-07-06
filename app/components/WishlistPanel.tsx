@@ -192,10 +192,23 @@ export default function WishlistPanel({ tripId, trip }: { tripId: string; trip: 
           <p style={{ margin: "4px 0 0", fontSize: 12 }}>新增後可拖曳到上方日期加入行程</p>
         </div>
       ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+  {Object.entries(CAT_META).map(([catKey, catVal]) => {
+    const group = pendingPlaces.filter(p => (p.category || 'attraction') === catKey)
+    if (group.length === 0) return null
+    return (
+      <div key={catKey}>
+        <p style={{ margin: "0 0 8px", fontSize: 12, color: "#888", display: "flex", alignItems: "center", gap: 6 }}>
+          <span>{catVal.icon}</span> {catVal.label}
+        </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {pendingPlaces.map(place => (
+          {group.map(place => (
             <DraggablePlace key={place.id} place={place} onEdit={() => setEditingPlace(place)} onDelete={() => deletePlace(place.id)} />
           ))}
+        </div>
+      </div>
+    )
+  })}
           {donePlaces.length > 0 && (
             <>
               <p style={{ margin: "8px 0 4px", fontSize: 12, color: "#888" }}>✅ 已加入行程</p>
