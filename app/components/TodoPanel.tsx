@@ -84,4 +84,4 @@ export default function TodoPanel() {
           {/* 已完成 */}
           {done.length > 0 && (
             <div style={{ marginTop: 16 }}>
-              <p style={{ margin: "0 0 8px", fontSize: 12, color: "#888" }}>✅ 已完成
+              <p style={{ margin: "0 0 8px", fontSize: 12, color: "#888" }}> 已完成
