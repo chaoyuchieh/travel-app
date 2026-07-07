@@ -119,7 +119,7 @@ export default function ShoppingPanel({ tripId }: { tripId: string }) {
 
             {/* 照片上傳 */}
             <div>
-              <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleImageChange} style={{ display: "none" }} />
+             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} style={{ display: "none" }} />
               <button onClick={() => fileInputRef.current?.click()} style={{
                 width: "100%", padding: "10px", fontSize: 13, cursor: "pointer",
                 background: "white", border: "1px dashed #ddd", borderRadius: 8,
